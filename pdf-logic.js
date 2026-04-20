@@ -362,6 +362,7 @@
   async function generate(ctx){
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation:"p", unit:"mm", format:"legal" });
+    doc.viewerPreferences({ PrintScaling: "None" }, true);
 
     await ensurePdfFont(doc);
 
