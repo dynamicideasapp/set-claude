@@ -47,7 +47,7 @@ const DRAFTS_KEY = "set_drafts_v1";
 const CURRENT_DRAFT_ID_KEY = "set_current_draft_id_v1";
 const DRAFTS_MAX = 10;
 const PDF_LIBRARY_KEY = "set_pdf_library_v1";
-const PDF_LIBRARY_MAX = 10;
+const PDF_LIBRARY_MAX = window.Capacitor?.isNativePlatform?.() ? 10 : 5;
 const REPORT_MEMBRETE_KEY = "set_report_membrete_v1";
 const REPORT_MEMBRETE_MODE_KEY = "set_report_membrete_mode_v1";
 const REPORT_MEMBRETE_TEXT_KEY = "set_report_membrete_text_v1";
@@ -2409,6 +2409,7 @@ async function generarPDF(){
     if (res?.dataUrl) {
       try { addPdfToLibrary({ dataUrl: res.dataUrl, fileName: res.fileName, reportCode }); }
       catch (libErr) { console.warn("No se pudo guardar en biblioteca PDF:", libErr?.message || libErr); }
+      if (typeof gtag === "function") gtag('event', 'pdf_generado', { event_category: 'PDF' });
     }
 
     // Abrir blobUrl si no se pudo guardar en filesystem
