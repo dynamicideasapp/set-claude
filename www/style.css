@@ -495,7 +495,7 @@ button,.btn-label{
 button:active,.btn-label:active{transform:scale(.97); box-shadow:0 2px 6px rgba(0,0,0,0.15);}
 
 .btn-main{ background:var(--btn-main); }
-.btn-sec{ background:var(--btn-neutral); box-shadow:0 3px 10px rgba(0,0,0,0.14); }
+.btn-sec{ background:var(--btn-neutral); box-shadow:0 3px 10px rgba(0,0,0,0.14); display:flex; align-items:center; justify-content:center; gap:8px; }
 .btn-ok{ background:var(--btn-ok); box-shadow:0 4px 14px rgba(194,135,13,0.30); }
 .btn-danger{ background:var(--btn-danger); font-size:.88rem; margin-top:24px; box-shadow:0 4px 14px rgba(185,28,28,0.28); }
 .btn-mini{ padding:9px 12px; font-size:.75rem; border-radius:9px; margin:0; box-shadow:0 2px 8px rgba(0,0,0,0.12); letter-spacing:.5px; }
