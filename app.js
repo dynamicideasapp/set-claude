@@ -2312,6 +2312,16 @@ function setFinalizedFlag(){
   localStorage.setItem(FINALIZED_FLAG, "1");
 }
 
+function irARevision(){
+  const nameOk = (document.getElementById('f_nom').value || "").trim().length > 0;
+  const rankOk = (document.getElementById('f_rank').value || "").trim().length > 0;
+  if (!nameOk || !rankOk) {
+    alert("DEBE COMPLETAR LOS DATOS");
+    return;
+  }
+  cambiarPaso(5);
+}
+
 function updatePdfButtonState(){
   const btn = document.getElementById('btn-pdf');
   if (!btn) return;
