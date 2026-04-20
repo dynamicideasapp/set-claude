@@ -7,7 +7,11 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-  gtag('config', 'G-2BBRY766EB');
+  var _gaConfig = {};
+  if (window.location.hostname === 'localhost') {
+    _gaConfig['page_location'] = 'https://app.setfotografico.cl/';
+  }
+  gtag('config', 'G-2BBRY766EB', _gaConfig);
 </script>
 <!-- End Google Analytics -->
   <meta charset="UTF-8" />

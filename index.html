@@ -7,7 +7,11 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-  gtag('config', 'G-2BBRY766EB');
+  var _gaConfig = { transport_type: 'beacon' };
+  if (window.location.hostname === 'localhost') {
+    _gaConfig['page_location'] = 'https://app.setfotografico.cl/';
+  }
+  gtag('config', 'G-2BBRY766EB', _gaConfig);
 </script>
 <!-- End Google Analytics -->
   <meta charset="UTF-8" />
@@ -39,10 +43,6 @@
 </head>
 
 <body>
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NZWL83V6"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
   <div id="splash" class="splash-screen splash-brand">
     <div class="brand-splash-wrap" aria-label="Cargando Dynamic Ideas">
       <!-- Logo empresa -->
