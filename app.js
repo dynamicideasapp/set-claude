@@ -2404,7 +2404,25 @@ async function generarPDF(){
 
     // Abrir blobUrl si no se pudo guardar en filesystem
     if (!saved && res?.blobUrl) {
-      try { window.open(res.blobUrl, "_blank"); } catch (_) {}
+      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      if (isIOS && res?.dataUrl) {
+        try {
+          const b64 = res.dataUrl.includes(",") ? res.dataUrl.split(",")[1] : res.dataUrl;
+          const raw = atob(b64);
+          const bytes = new Uint8Array(raw.length);
+          for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+          const file = new File([bytes], (res.fileName || "reporte") + ".pdf", { type: "application/pdf" });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: res.fileName || "Reporte PDF" });
+          } else {
+            window.open(res.blobUrl, "_blank");
+          }
+        } catch (_) {
+          window.open(res.blobUrl, "_blank");
+        }
+      } else {
+        try { window.open(res.blobUrl, "_blank"); } catch (_) {}
+      }
     }
 
     // Mostrar resultado
