@@ -336,12 +336,14 @@ async function sharePdfFromLibrary(id){
     const _b64f = item.dataUrl.includes(",") ? item.dataUrl.split(",")[1] : item.dataUrl;
     const _rawf = atob(_b64f), _bytesf = new Uint8Array(_rawf.length);
     for (let i = 0; i < _rawf.length; i++) _bytesf[i] = _rawf.charCodeAt(i);
+    const _blobf = new Blob([_bytesf], { type: "application/pdf" });
     const _filef = new File([_bytesf], (item.name || "reporte") + ".pdf", { type: "application/pdf" });
+    const _openFallback = () => { const u = URL.createObjectURL(_blobf); window.open(u, "_blank"); };
     if (navigator.canShare && navigator.canShare({ files: [_filef] })) {
       try { await navigator.share({ files: [_filef], title: item.name || "Reporte fotográfico" }); }
-      catch(e){ if (e.name !== 'AbortError') window.open(item.dataUrl, "_blank"); }
+      catch(e){ if (e.name !== 'AbortError') _openFallback(); }
     } else {
-      window.open(item.dataUrl, "_blank");
+      _openFallback();
     }
     return;
   }
