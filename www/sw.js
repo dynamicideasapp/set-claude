@@ -1,4 +1,4 @@
-const CACHE_NAME = 'set-claude-v1';
+const CACHE_NAME = 'set-claude-v2';
 const ASSETS = [
   './',
   './index.html',

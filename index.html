@@ -7,7 +7,7 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-  var _gaConfig = { transport_type: 'beacon' };
+  var _gaConfig = {};
   if (window.location.hostname === 'localhost') {
     _gaConfig['page_location'] = 'https://app.setfotografico.cl/';
   }
@@ -34,11 +34,24 @@
   <!-- ✅ LIB jsPDF local (debe ir antes de pdf-logic.js) -->
   <script src="./libs/jspdf.umd.min.js"></script>
 
+  <!-- ✅ HEIC/HEIF → JPEG converter -->
+  <script src="./libs/heic2any.min.js"></script>
+
   <!-- ✅ Lógica PDF (antes que app.js para que exista SETPDF) -->
   <script src="./pdf-logic.js"></script>
 
   <!-- ✅ App principal -->
   <script src="./app.js" defer></script>
+
+  <!-- Service Worker (offline real) -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .catch((err) => console.warn('SW registro fallido:', err));
+      });
+    }
+  </script>
 
 </head>
 
@@ -177,6 +190,32 @@
             <div id="wNote" class="small-note"></div>
           </div>
         </div>
+
+        <!-- CONTACTO -->
+        <div class="panel panel-collapsible" onclick="togglePanel('contactoContent','contactoArrow')">
+          <div class="panel-title">📬 Contacto <span id="contactoArrow" class="panel-arrow">▼</span></div>
+          <div id="contactoContent" class="panel-body" style="display:none;" onclick="event.stopPropagation()">
+
+            <div class="contacto-btns">
+              <button class="btn-sec btn-mini" onclick="toggleContactoForm()">✉️ MENSAJE</button>
+              <button class="btn-main btn-mini" onclick="abrirWhatsApp()">💬 WHATSAPP</button>
+            </div>
+
+            <div id="contactoForm" style="display:none; margin-top:12px;">
+              <input id="contactoAsunto" type="text" placeholder="Asunto" maxlength="100"
+                style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#f1f5f9;font-size:0.85rem;margin-bottom:8px;" />
+              <textarea id="contactoMensaje" placeholder="Describe tu consulta o problema..." maxlength="450"
+                style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#f1f5f9;font-size:0.85rem;resize:none;height:100px;"
+                oninput="actualizarContadorContacto()"></textarea>
+              <div style="text-align:right;font-size:0.75rem;color:#94a3b8;margin-top:2px;">
+                <span id="contactoContador">0</span>/450
+              </div>
+              <button class="btn-ok btn-mini" style="margin-top:8px;width:100%;" onclick="enviarMensajeContacto()">ENVIAR MENSAJE</button>
+            </div>
+
+          </div>
+        </div>
+
       </div>
 
       <div id="s9" class="step">
