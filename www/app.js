@@ -260,33 +260,96 @@ async function handleSigImage(file){
 let _firmaDrawing = false;
 let _firmaCtx = null;
 
+function _firmaRenderCanvas() {
+  const canvas = document.getElementById('firmaPadCanvas');
+  if (!canvas || !_firmaCtx) return;
+  const nombre = (document.getElementById('f_nom')?.value || '').trim().toUpperCase();
+  const cargo  = (document.getElementById('f_rank')?.value || '').trim().toUpperCase();
+  const W = canvas.width, H = canvas.height;
+
+  // Calcular ancho de línea basado en nombre
+  const charPx = 11;
+  const lineW = Math.max((nombre.length || 18) * charPx, 180);
+  const lineX = Math.round((W - lineW) / 2);
+  const lineY = Math.round(H * 0.60);
+
+  _firmaCtx.clearRect(0, 0, W, H);
+
+  // Línea de referencia punteada
+  _firmaCtx.save();
+  _firmaCtx.strokeStyle = '#94a3b8';
+  _firmaCtx.lineWidth = 1;
+  _firmaCtx.setLineDash([6, 4]);
+  _firmaCtx.beginPath();
+  _firmaCtx.moveTo(lineX, lineY);
+  _firmaCtx.lineTo(lineX + lineW, lineY);
+  _firmaCtx.stroke();
+  _firmaCtx.setLineDash([]);
+  _firmaCtx.restore();
+
+  // Nombre bajo la línea
+  if (nombre) {
+    _firmaCtx.save();
+    _firmaCtx.font = 'bold 13px Arial';
+    _firmaCtx.fillStyle = '#334155';
+    _firmaCtx.textAlign = 'center';
+    _firmaCtx.fillText(nombre, W / 2, lineY + 18);
+    _firmaCtx.restore();
+  }
+
+  // Cargo bajo el nombre
+  if (cargo) {
+    _firmaCtx.save();
+    _firmaCtx.font = '11px Arial';
+    _firmaCtx.fillStyle = '#64748b';
+    _firmaCtx.textAlign = 'center';
+    _firmaCtx.fillText(cargo, W / 2, lineY + 33);
+    _firmaCtx.restore();
+  }
+
+  // Configurar trazo de firma
+  _firmaCtx.strokeStyle = '#1e3a5f';
+  _firmaCtx.lineWidth = 2.5;
+  _firmaCtx.lineCap = 'round';
+  _firmaCtx.lineJoin = 'round';
+}
+
 function abrirPadFirma() {
   const modal = document.getElementById('firmaPadModal');
   const canvas = document.getElementById('firmaPadCanvas');
   if (!modal || !canvas) return;
 
-  // Ajustar tamaño real del canvas
-  const W = Math.min(window.innerWidth - 40, 420);
-  const H = Math.round(W * 0.45);
+  modal.style.display = 'flex';
+
+  // Forzar landscape via CSS si está en portrait
+  const isPortrait = window.innerHeight > window.innerWidth;
+  if (isPortrait) {
+    modal.classList.add('firma-landscape');
+  } else {
+    modal.classList.remove('firma-landscape');
+  }
+
+  // Intentar también via API nativa
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('landscape').catch(() => {});
+  }
+
+  // Tamaño del canvas
+  const W = Math.min(Math.max(window.innerWidth, window.innerHeight) - 40, 560);
+  const H = Math.round(W * 0.42);
   canvas.width = W;
   canvas.height = H;
   canvas.style.height = H + 'px';
 
   _firmaCtx = canvas.getContext('2d');
-  _firmaCtx.clearRect(0, 0, W, H);
-  _firmaCtx.strokeStyle = '#1e3a5f';
-  _firmaCtx.lineWidth = 2.5;
-  _firmaCtx.lineCap = 'round';
-  _firmaCtx.lineJoin = 'round';
+  _firmaRenderCanvas();
 
-  modal.style.display = 'flex';
-
-  // Eventos touch
+  // Touch
   canvas.ontouchstart = (e) => { e.preventDefault(); _firmaDrawing = true; const p = _firmaPos(e.touches[0], canvas); _firmaCtx.beginPath(); _firmaCtx.moveTo(p.x, p.y); };
   canvas.ontouchmove  = (e) => { e.preventDefault(); if (!_firmaDrawing) return; const p = _firmaPos(e.touches[0], canvas); _firmaCtx.lineTo(p.x, p.y); _firmaCtx.stroke(); };
   canvas.ontouchend   = () => { _firmaDrawing = false; };
 
-  // Eventos mouse (laptop/web)
+  // Mouse
   canvas.onmousedown = (e) => { _firmaDrawing = true; const p = _firmaPos(e, canvas); _firmaCtx.beginPath(); _firmaCtx.moveTo(p.x, p.y); };
   canvas.onmousemove = (e) => { if (!_firmaDrawing) return; const p = _firmaPos(e, canvas); _firmaCtx.lineTo(p.x, p.y); _firmaCtx.stroke(); };
   canvas.onmouseup   = () => { _firmaDrawing = false; };
@@ -300,21 +363,28 @@ function _firmaPos(e, canvas) {
 }
 
 function limpiarFirmaPad() {
-  const canvas = document.getElementById('firmaPadCanvas');
-  if (_firmaCtx) _firmaCtx.clearRect(0, 0, canvas.width, canvas.height);
+  _firmaRenderCanvas();
+}
+
+function _cerrarFirmaPadOrientacion() {
+  const modal = document.getElementById('firmaPadModal');
+  if (modal) modal.classList.remove('firma-landscape');
+  if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
 }
 
 function cerrarFirmaPad() {
+  _cerrarFirmaPadOrientacion();
   document.getElementById('firmaPadModal').style.display = 'none';
 }
 
 async function confirmarFirmaPad() {
   const canvas = document.getElementById('firmaPadCanvas');
   if (!canvas) return;
+  _cerrarFirmaPadOrientacion();
   const dataUrl = canvas.toDataURL('image/png');
   await setReportSigImage(dataUrl);
   renderSigImageUI();
-  cerrarFirmaPad();
+  document.getElementById('firmaPadModal').style.display = 'none';
   showToast('Firma guardada.', 'success');
 }
 // ──────────────────────────────────────────────────────────

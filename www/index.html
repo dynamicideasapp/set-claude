@@ -534,14 +534,13 @@
 <footer class="app-footer" id="footerText"></footer>
 <!-- Modal pad de firma -->
 <div id="firmaPadModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0c1526; z-index:9999; flex-direction:column; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
-  <p style="color:#94a3b8; font-size:.75rem; letter-spacing:1px; margin:0 0 6px; text-transform:uppercase;">Dibuja tu firma abajo</p>
-  <div style="position:relative; width:100%; max-width:420px;">
+  <p style="color:#94a3b8; font-size:.75rem; letter-spacing:1px; margin:0 0 10px; text-transform:uppercase;">Dibuja tu firma en el recuadro</p>
+  <div style="position:relative; width:100%; max-width:520px;">
     <canvas id="firmaPadCanvas" style="width:100%; border-radius:10px; background:#fff; touch-action:none; display:block;"></canvas>
-    <div id="firmaLineaRef" style="position:absolute; bottom:28%; left:5%; width:90%; height:1px; background:#cbd5e1; pointer-events:none;"></div>
-    <p style="position:absolute; bottom:calc(28% + 4px); left:5%; color:#94a3b8; font-size:.65rem; margin:0; pointer-events:none;">_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _</p>
+    <!-- línea y texto de referencia se dibujan en el canvas -->
   </div>
-  <div style="display:flex; gap:12px; margin-top:16px; width:100%; max-width:420px;">
-    <button class="btn-main" style="flex:1;" onclick="confirmarFirmaPad()">✅ CONFIRMAR FIRMA</button>
+  <div style="display:flex; gap:10px; margin-top:14px; width:100%; max-width:520px;">
+    <button class="btn-main" style="flex:1;" onclick="confirmarFirmaPad()">✅ CONFIRMAR</button>
     <button class="btn-sec" style="flex:1;" onclick="limpiarFirmaPad()">🗑️ LIMPIAR</button>
     <button class="btn-danger" style="flex:1;" onclick="cerrarFirmaPad()">CANCELAR</button>
   </div>
