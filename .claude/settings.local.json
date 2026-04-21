@@ -14,7 +14,8 @@
       "Bash(npx cap *)",
       "Bash(./gradlew assembleDebug)",
       "Bash(git remote *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(curl -sL \"https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js\" -o www/libs/heic2any.min.js)"
     ]
   }
 }

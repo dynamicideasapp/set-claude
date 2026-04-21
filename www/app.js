@@ -1267,6 +1267,33 @@ function togglePanel(contentId, arrowId){
   if (arrow) arrow.textContent = isOpen ? "▼" : "▲";
 }
 
+// ── CONTACTO ──────────────────────────────────────────────
+function toggleContactoForm(){
+  const form = document.getElementById('contactoForm');
+  if (!form) return;
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+function actualizarContadorContacto(){
+  const msg = document.getElementById('contactoMensaje');
+  const counter = document.getElementById('contactoContador');
+  if (msg && counter) counter.textContent = msg.value.length;
+}
+
+function enviarMensajeContacto(){
+  const asunto = (document.getElementById('contactoAsunto')?.value || '').trim();
+  const mensaje = (document.getElementById('contactoMensaje')?.value || '').trim();
+  if (!asunto) { alert('Por favor ingresa un asunto.'); return; }
+  if (!mensaje) { alert('Por favor escribe tu mensaje.'); return; }
+  const mailto = `mailto:dynamic.ideas.app@gmail.com?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(mensaje)}`;
+  window.open(mailto, '_blank');
+}
+
+function abrirWhatsApp(){
+  window.open('https://wa.me/56967009521', '_blank');
+}
+// ──────────────────────────────────────────────────────────
+
 function uuid(){ return 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9); }
 function revokeAllUrls(){ photos.forEach(p => { if (p.url) URL.revokeObjectURL(p.url); }); }
 
@@ -1479,9 +1506,15 @@ function isUnsupportedImageType(file){
 }
 
 async function optimizeImageFileToBlob(file){
-  const t = (file.type || "").toLowerCase();
-  if (t.includes("heic") || t.includes("heif")) {
-    throw new Error("Formato HEIC/HEIF no soportado. Cambia la cámara a JPEG o usa 'Compartir como JPG'.");
+  let t = (file.type || "").toLowerCase();
+  if (t.includes("heic") || t.includes("heif") ||
+      file.name?.toLowerCase().endsWith(".heic") || file.name?.toLowerCase().endsWith(".heif")) {
+    if (typeof heic2any === "undefined") {
+      throw new Error("Formato HEIC no soportado en este dispositivo.");
+    }
+    const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 });
+    file = Array.isArray(converted) ? converted[0] : converted;
+    t = "image/jpeg";
   }
 
   const { maxSide, quality } = getCompressionSettings(file);

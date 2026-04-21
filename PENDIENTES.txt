@@ -1,4 +1,47 @@
 PENDIENTES
 
-- Agregar soporte para imagenes HEIC/HEIF (conversion a JPG con libreria externa).
+- Agregar soporte para imagenes HEIC/HEIF (conversion a JPG con libreria externa). SOLUCIONADO
 - Completar telefonos y direcciones de utilidad (todas las instituciones restantes).
+
+
+## 10 CRÍTICAS
+
+1.  Sin cuenta de usuario — todo vive en el dispositivo. Si se borra la app, se pierde todo.
+2.  PDF no se descarga en iPhone — Safari bloquea descargas de blob, el usuario no puede guardar el archivo. SOLUCIONADO
+3.  Sin modo offline real — si no carga el JS, la app no funciona. Falta Service Worker. SOLUCIONADO
+4.  LocalStorage como único almacenamiento — 5MB se llena rápido con fotos en base64. SOLUCIONADO
+5.  Sin respaldo en la nube — borradores e historial son locales, riesgo alto de pérdida.
+6.  Compresión de imágenes sin control del usuario — fotos pueden salir pixeladas o demasiado pesadas.
+7.  Sin manejo de errores visible — si algo falla al generar PDF, el usuario no sabe qué pasó.
+8.  Sin soporte para múltiples informes activos — solo hay un borrador a la vez en pantalla.
+9.  Firma digital solo como imagen — no hay firma real con trazado a mano en pantalla.
+10. Sin validación de formato de fotos — archivos corruptos o formatos raros pueden romper el PDF.
+11. PDF se imprime predeterminado a escala, se soluciona saliendo a escala real. SOLUCIONADO
+
+
+## 10 MEDIAS
+
+11. Sin buscador en historial de PDFs — con varios informes es difícil encontrar uno.
+12. Sin numeración automática de informe editable — el código se genera solo pero no se puede personalizar.
+13. Sin exportación a Word/Excel — solo PDF limita el uso en algunos contextos laborales.
+14. Sin previsualización antes de subir foto — el usuario no confirma la foto antes de agregarla.
+15. Sin orden por fecha/nombre en la biblioteca de PDFs.
+16. Sin opción de duplicar informe — para informes similares hay que empezar de cero.
+17. Plantillas no exportables — no se pueden compartir entre dispositivos o usuarios.
+18. Sin indicador de progreso al generar PDF en informes con muchas fotos.
+19. Sin soporte de fotos en modo paisaje — algunas fotos tomadas horizontalmente se ven mal.
+20. Sin estadísticas de uso — no sabes cuántos informes generan los usuarios reales. HECHO
+
+
+## 10 BÁSICAS
+
+21. Sin botón "copiar código de informe" — hay que escribirlo a mano.
+22. Fecha no se preselecciona en formato local correcto según país del usuario.
+23. Sin mensaje de confirmación al borrar un borrador.
+24. Textos en mayúscula forzada en algunos botones dificulta lectura en pantalla pequeña.
+25. Sin modo oscuro — en ambientes de obra con sol, la pantalla blanca encandila.
+26. Sin acceso directo a cámara desde la app — siempre abre galería primero en algunos dispositivos.
+27. Sin contador visible de fotos agregadas en el menú principal.
+28. Sin opción de reordenar fotos con drag & drop — solo botones subir/bajar.
+29. Nombre del informe no se sugiere automáticamente basado en fecha y plantilla.
+30. Sin tutorial o pantalla de ayuda para usuarios nuevos.

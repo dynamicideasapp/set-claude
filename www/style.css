@@ -627,6 +627,7 @@ body.dark .panel-title{color:#93c5fd;}
 .w-minmax{color:var(--muted);font-size:.78rem;font-weight:800;}
 
 .weather-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.contacto-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 
 .acc{
   width:100%;
