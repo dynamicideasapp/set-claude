@@ -1,3 +1,7 @@
 {
-    "liveServer.settings.port": 5501
+    "liveServer.settings.port": 5501,
+    "liveServer.settings.root": "/www",
+    "liveServer.settings.CustomBrowser": "chrome",
+    "liveServer.settings.file": "/index.html",
+    "liveServer.settings.NoBrowser": false
 }

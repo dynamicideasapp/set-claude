@@ -3,9 +3,92 @@ NOTAS BETA CLAUDE 1.0 – SET FOTOGRÁFICO
 Creada por Hernán Díaz · Dynamic Ideas
 =========================================================
 
-VERSIÓN ACTUAL: APP BETA CLAUDE 1.0 – BUILD 2026-04-20
-APK: SET_FOTOGRAFICO_v4.6_debug.apk
+VERSIÓN ACTUAL: APP BETA CLAUDE 1.0 – BUILD 2026-04-21
+APK: SET_FOTOGRAFICO_v1.2_beta.apk
 ID App: com.dynamicideas.setfotografico
+
+=========================================================
+SESIÓN CLAUDE – 2026-04-21 (NOVENA ACTUALIZACIÓN)
+=========================================================
+
+MEJORAS IMPLEMENTADAS:
+
+1. GITHUB ACTION – DEPLOY AUTOMÁTICO A GITHUB PAGES
+   - Agregado .github/workflows/deploy.yml
+   - Cada push a main despliega automáticamente la carpeta www/ a GitHub Pages
+   - Eliminados los archivos duplicados de la raíz (app.js, index.html, style.css,
+     pdf-logic.js, sw.js, manifest.json, libs/) — la fuente única queda en www/
+   - Archivos: .github/workflows/deploy.yml
+
+2. FIXES GITHUB PAGES
+   - Agregado heic2any.min.js en libs/ raíz para compatibilidad con Pages
+   - Agregado sw.js en raíz y corregido meta mobile-web-app-capable
+   - Archivos: www/index.html, sw.js
+
+APK GENERADA:
+   - Archivo: SET_FOTOGRAFICO_v1.2_beta.apk
+
+=========================================================
+SESIÓN CLAUDE – 2026-04-21 (OCTAVA ACTUALIZACIÓN)
+=========================================================
+
+MEJORAS IMPLEMENTADAS:
+
+1. PAD DE FIRMA DIGITAL – TRAZADO A MANO EN PANTALLA
+   - Reemplaza la opción de subir imagen de firma por un canvas táctil
+   - El usuario dibuja su firma directamente en pantalla con el dedo
+   - Nombre y cargo se muestran debajo del trazo en el canvas (no solo en PDF)
+   - Landscape forzado durante el trazado via CSS + Screen Orientation API
+     para dar más espacio horizontal al firmar
+   - La firma generada se guarda en IndexedDB igual que antes
+   - Archivos: www/app.js → pad canvas, www/index.html → modal pad,
+               www/style.css → estilos landscape/canvas
+
+2. SISTEMA DE TOAST – REEMPLAZA alert() POR NOTIFICACIONES VISUALES
+   - Todos los alert() del sistema reemplazados por toasts no bloqueantes
+   - El toast aparece en la parte superior de la pantalla y desaparece solo
+   - No interrumpe el flujo del usuario (alert() bloqueaba la UI en Android)
+   - Archivos: www/app.js → función showToast(), www/index.html → #toast-container,
+               www/style.css → estilos .toast
+
+3. INTEGRACIÓN SENTRY – MONITOREO AUTOMÁTICO DE ERRORES
+   - Sentry SDK cargado via loader script con DSN del proyecto
+   - Captura automática de errores JS no controlados en producción
+   - Configurado correctamente: sentryOnLoad definido ANTES del loader script
+   - Eliminado tracesSampleRate incompatible con el loader bundle
+   - Archivos: www/index.html
+
+=========================================================
+SESIÓN CLAUDE – 2026-04-20 (SÉPTIMA ACTUALIZACIÓN)
+=========================================================
+
+MEJORAS IMPLEMENTADAS:
+
+1. FIX COMPARTIR PDF
+   - Antes: chequeo isIOS no activaba diálogo nativo en Chrome Android
+   - Ahora: usa navigator.canShare() para detectar soporte real del navegador
+   - Activa diálogo nativo en Chrome Android, Safari iOS y Safari macOS
+   - Fallback a window.open() para browsers sin soporte
+   - Fix adicional: el fallback usa URL.createObjectURL() en vez de data URL
+     (Chrome bloquea window.open() con data URLs por seguridad)
+   - Archivos: www/app.js
+
+2. FIX BOTONES CONTACTO
+   - Problema: window.open() bloqueado por los popups blocker en Android
+   - Solución: reemplazado por creación dinámica de elemento <a> con click()
+   - Los botones de teléfono y dirección ahora abren sin bloqueo
+   - Archivos: www/app.js
+
+3. ELIMINA BOTÓN Y CÓDIGO "VERSIÓN WEB / ESCRITORIO"
+   - Removido botón #btnModoEscritorio del HTML
+   - Eliminadas funciones initModoEscritorio() y toggleModoEscritorio() del JS
+   - Eliminadas reglas CSS body.modo-escritorio
+   - Archivos: www/app.js, www/index.html, www/style.css
+
+4. FIX IDs FALTANTES EN FORMULARIO
+   - Agregados IDs faltantes: sheetSizeNote, fontNote, noteColorNote
+   - Eliminado código muerto: función selectReportMembreteMode
+   - Archivos: www/app.js, www/index.html
 
 =========================================================
 SESIÓN CLAUDE – 2026-04-20 (SEXTA ACTUALIZACIÓN)
@@ -332,7 +415,7 @@ VERSIÓN 3.0 – Publicidad instalada
 PENDIENTES / IDEAS FUTURAS
 =========================================================
 
-- [ ] Firma dibujada con el dedo (canvas táctil)
+- [x] Firma dibujada con el dedo (canvas táctil) — IMPLEMENTADO sesión 2026-04-21
 - [ ] Grid de fotos en PDF (2 fotos por fila)
 - [ ] Recorte de fotos (crop)
 - [ ] Múltiples notas finales con secciones

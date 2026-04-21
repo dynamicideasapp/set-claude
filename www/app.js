@@ -5,8 +5,8 @@
 /***********************
  * CONFIG VERSION
  ***********************/
-const VERSION_LABEL = "APP BETA CLAUDE 1.0";
-const BUILD_DATE = "2026-04-17";
+const VERSION_LABEL = "APP BETA CLAUDE 1.3";
+const BUILD_DATE = "2026-04-21";
 const EXPIRY_DATE = new Date(2026, 4, 20, 0, 0, 0); // 20 Mayo 2026 00:00 hora local
 
 function checkExpiry() {
@@ -264,7 +264,6 @@ function _firmaRenderCanvas() {
   const canvas = document.getElementById('firmaPadCanvas');
   if (!canvas || !_firmaCtx) return;
   const nombre = (document.getElementById('f_nom')?.value || '').trim().toUpperCase();
-  const cargo  = (document.getElementById('f_rank')?.value || '').trim().toUpperCase();
   const W = canvas.width, H = canvas.height;
 
   // Calcular ancho de línea basado en nombre
@@ -287,25 +286,6 @@ function _firmaRenderCanvas() {
   _firmaCtx.setLineDash([]);
   _firmaCtx.restore();
 
-  // Nombre bajo la línea
-  if (nombre) {
-    _firmaCtx.save();
-    _firmaCtx.font = 'bold 13px Arial';
-    _firmaCtx.fillStyle = '#334155';
-    _firmaCtx.textAlign = 'center';
-    _firmaCtx.fillText(nombre, W / 2, lineY + 18);
-    _firmaCtx.restore();
-  }
-
-  // Cargo bajo el nombre
-  if (cargo) {
-    _firmaCtx.save();
-    _firmaCtx.font = '11px Arial';
-    _firmaCtx.fillStyle = '#64748b';
-    _firmaCtx.textAlign = 'center';
-    _firmaCtx.fillText(cargo, W / 2, lineY + 33);
-    _firmaCtx.restore();
-  }
 
   // Configurar trazo de firma
   _firmaCtx.strokeStyle = '#1e3a5f';
@@ -314,45 +294,41 @@ function _firmaRenderCanvas() {
   _firmaCtx.lineJoin = 'round';
 }
 
+function _firmaInitCanvas() {
+  const canvas = document.getElementById('firmaPadCanvas');
+  if (!canvas) return;
+  const W = Math.min(window.innerWidth - 40, 560);
+  const H = Math.round(W * 0.42);
+  canvas.width = W;
+  canvas.height = H;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  _firmaCtx = canvas.getContext('2d');
+  _firmaRenderCanvas();
+
+  canvas.ontouchstart = (e) => { e.preventDefault(); _firmaDrawing = true; const p = _firmaPos(e.touches[0], canvas); _firmaCtx.beginPath(); _firmaCtx.moveTo(p.x, p.y); };
+  canvas.ontouchmove  = (e) => { e.preventDefault(); if (!_firmaDrawing) return; const p = _firmaPos(e.touches[0], canvas); _firmaCtx.lineTo(p.x, p.y); _firmaCtx.stroke(); };
+  canvas.ontouchend   = () => { _firmaDrawing = false; };
+  canvas.onmousedown  = (e) => { _firmaDrawing = true; const p = _firmaPos(e, canvas); _firmaCtx.beginPath(); _firmaCtx.moveTo(p.x, p.y); };
+  canvas.onmousemove  = (e) => { if (!_firmaDrawing) return; const p = _firmaPos(e, canvas); _firmaCtx.lineTo(p.x, p.y); _firmaCtx.stroke(); };
+  canvas.onmouseup    = () => { _firmaDrawing = false; };
+}
+
 function abrirPadFirma() {
   const modal = document.getElementById('firmaPadModal');
   const canvas = document.getElementById('firmaPadCanvas');
   if (!modal || !canvas) return;
 
   modal.style.display = 'flex';
+  modal.classList.remove('firma-landscape');
 
-  // Forzar landscape via CSS si está en portrait
-  const isPortrait = window.innerHeight > window.innerWidth;
-  if (isPortrait) {
-    modal.classList.add('firma-landscape');
-  } else {
-    modal.classList.remove('firma-landscape');
-  }
-
-  // Intentar también via API nativa
   if (screen.orientation && screen.orientation.lock) {
-    screen.orientation.lock('landscape').catch(() => {});
+    screen.orientation.lock('landscape')
+      .then(() => { setTimeout(_firmaInitCanvas, 120); })
+      .catch(() => { _firmaInitCanvas(); });
+  } else {
+    _firmaInitCanvas();
   }
-
-  // Tamaño del canvas
-  const W = Math.min(Math.max(window.innerWidth, window.innerHeight) - 40, 560);
-  const H = Math.round(W * 0.42);
-  canvas.width = W;
-  canvas.height = H;
-  canvas.style.height = H + 'px';
-
-  _firmaCtx = canvas.getContext('2d');
-  _firmaRenderCanvas();
-
-  // Touch
-  canvas.ontouchstart = (e) => { e.preventDefault(); _firmaDrawing = true; const p = _firmaPos(e.touches[0], canvas); _firmaCtx.beginPath(); _firmaCtx.moveTo(p.x, p.y); };
-  canvas.ontouchmove  = (e) => { e.preventDefault(); if (!_firmaDrawing) return; const p = _firmaPos(e.touches[0], canvas); _firmaCtx.lineTo(p.x, p.y); _firmaCtx.stroke(); };
-  canvas.ontouchend   = () => { _firmaDrawing = false; };
-
-  // Mouse
-  canvas.onmousedown = (e) => { _firmaDrawing = true; const p = _firmaPos(e, canvas); _firmaCtx.beginPath(); _firmaCtx.moveTo(p.x, p.y); };
-  canvas.onmousemove = (e) => { if (!_firmaDrawing) return; const p = _firmaPos(e, canvas); _firmaCtx.lineTo(p.x, p.y); _firmaCtx.stroke(); };
-  canvas.onmouseup   = () => { _firmaDrawing = false; };
 }
 
 function _firmaPos(e, canvas) {
@@ -381,6 +357,7 @@ async function confirmarFirmaPad() {
   const canvas = document.getElementById('firmaPadCanvas');
   if (!canvas) return;
   _cerrarFirmaPadOrientacion();
+  // Guardar canvas completo: fondo transparente, trazos visibles sobre y bajo la línea
   const dataUrl = canvas.toDataURL('image/png');
   await setReportSigImage(dataUrl);
   renderSigImageUI();
