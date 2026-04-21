@@ -231,7 +231,7 @@ async function handleReportMembreteImage(file){
     await setReportMembreteImage(String(dataUrl || ""));
     renderReportMembreteUI();
   } catch (e) {
-    alert("No se pudo cargar la imagen del membrete.");
+    showToast("No se pudo cargar la imagen del membrete.", "error");
   }
 }
 
@@ -254,7 +254,7 @@ async function handleSigImage(file){
     const dataUrl = await fileToJpegDataUrl(file, 800);
     await setReportSigImage(String(dataUrl || ""));
     renderSigImageUI();
-  }catch(e){ alert("No se pudo cargar la imagen de firma."); }
+  }catch(e){ showToast("No se pudo cargar la imagen de firma.", "error"); }
 }
 async function clearSigImage(){
   await setReportSigImage("");
@@ -285,7 +285,7 @@ async function handleTemplateSigImage(file){
     const dataUrl = await fileToJpegDataUrl(file, 800);
     await setTemplateSigImage(String(dataUrl || ""));
     renderTemplateSigImageUI();
-  }catch(e){ alert("No se pudo cargar la imagen de firma."); }
+  }catch(e){ showToast("No se pudo cargar la imagen de firma.", "error"); }
 }
 async function clearTemplateSigImage(){
   await setTemplateSigImage("");
@@ -322,7 +322,7 @@ async function sharePdfFromLibrary(id){
   const Filesystem = window.Capacitor?.Plugins?.Filesystem;
   const list = loadPdfLibrary();
   const item = list.find(p => p.id === id);
-  if (!item?.dataUrl){ alert("No se encontró el PDF."); return; }
+  if (!item?.dataUrl){ showToast("No se encontró el PDF.", "error"); return; }
 
   if (!Share || !Filesystem){
     const _b64f = item.dataUrl.includes(",") ? item.dataUrl.split(",")[1] : item.dataUrl;
@@ -353,7 +353,7 @@ async function sharePdfFromLibrary(id){
     });
   }catch(e){
     console.error("Error al compartir:", e);
-    alert("No se pudo compartir el PDF.");
+    showToast("No se pudo compartir el PDF.", "error");
   }
 }
 
@@ -496,7 +496,7 @@ async function savePdfOnAndroid(res){
 function openPdfFromLibrary(id){
   const list = loadPdfLibrary();
   const item = list.find((p) => p.id === id);
-  if (!item || !item.dataUrl){ alert("No se encontró el PDF."); return; }
+  if (!item || !item.dataUrl){ showToast("No se encontró el PDF.", "error"); return; }
   try {
     const b64 = item.dataUrl.includes(",") ? item.dataUrl.split(",")[1] : item.dataUrl;
     const raw = atob(b64);
@@ -576,7 +576,7 @@ function guardarBorrador(){
   const hasTitle = (snap.title || "").trim().length > 0;
   const hasAny = hasPhotos || hasTitle || (snap.name || "").trim() || (snap.rank || "").trim() || (snap.conclusion || "").trim();
   if (!hasAny) {
-    alert("No hay información para guardar como borrador.");
+    showToast("No hay información para guardar como borrador.", "warning");
     return;
   }
 
@@ -591,7 +591,7 @@ function guardarBorrador(){
   if (!name) return;
 
   if (existingIndex === -1 && list.length >= DRAFTS_MAX) {
-    alert(`Límite alcanzado: máximo ${DRAFTS_MAX} borradores.`);
+    showToast(`Límite alcanzado: máximo ${DRAFTS_MAX} borradores.`, 'warning');
     return;
   }
 
@@ -609,7 +609,7 @@ function guardarBorrador(){
   saveDrafts(list);
   setCurrentDraftId(payload.id);
   renderDrafts();
-  alert(existingIndex >= 0 ? "Borrador actualizado." : "Borrador guardado.");
+  showToast(existingIndex >= 0 ? 'Borrador actualizado.' : 'Borrador guardado.', 'success');
 }
 
 function renderDrafts(){
@@ -796,7 +796,7 @@ function getActiveTemplate(){
 function setActiveTemplate(id){
   if (!id) return;
   setActiveTemplateSilent(id);
-  alert("Plantilla activada.");
+  showToast("Plantilla activada.", "success");
 }
 
 function setActiveTemplateSilent(id){
@@ -1140,7 +1140,7 @@ async function handleMembreteImage(file){
     renderNewTemplateUI();
     closeSubmenu("membreteMenu");
   } catch (e) {
-    alert("No se pudo cargar la imagen del membrete.");
+    showToast("No se pudo cargar la imagen del membrete.", "error");
   }
 }
 
@@ -1154,14 +1154,14 @@ function saveNewTemplate(){
   const editingId = getEditingTemplateId();
   const editingIndex = editingId ? list.findIndex((t) => t.id === editingId) : -1;
   if (editingIndex === -1 && list.length >= TEMPLATE_LIBRARY_MAX) {
-    alert(`Límite alcanzado: máximo ${TEMPLATE_LIBRARY_MAX} plantillas.`);
+    showToast(`Límite alcanzado: máximo ${TEMPLATE_LIBRARY_MAX} plantillas.`, 'warning');
     return;
   }
 
   const input = document.getElementById("newTemplateName");
   const name = String(input?.value || "").trim();
   if (!name) {
-    alert("Ingresa un nombre para la plantilla.");
+    showToast("Ingresa un nombre para la plantilla.", "warning");
     return;
   }
 
@@ -1201,7 +1201,7 @@ function saveNewTemplate(){
   if (input) input.value = "";
   renderTemplateLibrary();
   renderNewSetMenu();
-  alert(editingIndex >= 0 ? "Plantilla actualizada." : "Plantilla guardada en la biblioteca.");
+  showToast(editingIndex >= 0 ? 'Plantilla actualizada.' : 'Plantilla guardada en la biblioteca.', 'success');
   cambiarPaso(1);
 }
 
@@ -1259,6 +1259,22 @@ function togglePanel(contentId, arrowId){
   if (arrow) arrow.textContent = isOpen ? "▼" : "▲";
 }
 
+// ── TOAST ─────────────────────────────────────────────────
+function showToast(msg, type = 'info', duration = 3500) {
+  const container = document.getElementById('toastContainer');
+  if (!container) { alert(msg); return; }
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  container.appendChild(t);
+  requestAnimationFrame(() => { requestAnimationFrame(() => t.classList.add('show')); });
+  setTimeout(() => {
+    t.classList.remove('show');
+    setTimeout(() => t.remove(), 350);
+  }, duration);
+}
+// ──────────────────────────────────────────────────────────
+
 // ── CONTACTO ──────────────────────────────────────────────
 function toggleContactoForm(){
   const form = document.getElementById('contactoForm');
@@ -1275,8 +1291,8 @@ function actualizarContadorContacto(){
 function enviarMensajeContacto(){
   const asunto = (document.getElementById('contactoAsunto')?.value || '').trim();
   const mensaje = (document.getElementById('contactoMensaje')?.value || '').trim();
-  if (!asunto) { alert('Por favor ingresa un asunto.'); return; }
-  if (!mensaje) { alert('Por favor escribe tu mensaje.'); return; }
+  if (!asunto) { showToast('Por favor ingresa un asunto.', 'warning'); return; }
+  if (!mensaje) { showToast('Por favor escribe tu mensaje.', 'warning'); return; }
   const mailto = `mailto:dynamic.ideas.app@gmail.com?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(mensaje)}`;
   const a = document.createElement('a');
   a.href = mailto;
@@ -1787,7 +1803,7 @@ function cambiarPasoInterno(n){
 }
 
 function guardarTitulo(){
-  if (!document.getElementById('ti_in').value.trim()) return alert("Por favor ingrese un título.");
+  if (!document.getElementById('ti_in').value.trim()) return showToast('Por favor ingrese un título.', 'warning');
   saveLocal();
   cambiarPaso(3);
 }
@@ -1885,7 +1901,7 @@ async function previsualizar(inputEl){
     URL.revokeObjectURL(rawUrl);
     console.error(e);
     const msg = (e && e.message) ? e.message : "Error al preparar la imagen. Intente con otra foto o una captura de pantalla.";
-    alert(msg);
+    showToast(msg, 'error', 5000);
     clearPreview();
   }
 }
@@ -1920,22 +1936,22 @@ async function rotarPreview(dir){
 
       } catch (err) {
         console.error(err);
-        alert("No se pudo rotar la vista previa.");
+        showToast("No se pudo rotar la vista previa.", "error");
       } finally { URL.revokeObjectURL(url); }
     };
 
-    img.onerror = () => { URL.revokeObjectURL(url); alert("No se pudo cargar la imagen para rotar."); };
+    img.onerror = () => { URL.revokeObjectURL(url); showToast("No se pudo cargar la imagen para rotar.", "error"); };
     img.src = url;
 
   } catch (e) {
     console.error(e);
-    alert("Error al rotar la vista previa.");
+    showToast("Error al rotar la vista previa.", "error");
   }
 }
 
 async function procesarFoto(){
   const input = document.getElementById('f_input');
-  if (!preview.blob) return alert("Debe seleccionar una foto primero (y ver la miniatura).");
+  if (!preview.blob) return showToast("Debe seleccionar una foto primero.", "warning");
 
   document.getElementById('btn-add').disabled = true;
   document.getElementById('status').innerText = "Guardando imagen...";
@@ -1976,7 +1992,7 @@ async function procesarFoto(){
 
   } catch(e) {
     console.error(e);
-    alert("Error al guardar la foto.");
+    showToast("Error al guardar la foto.", "error");
     document.getElementById('btn-add').disabled = false;
     document.getElementById('status').innerText = "";
   }
@@ -2245,7 +2261,7 @@ async function rotarFoto(index, dir){
     if (!p) return;
 
     const blob = await idbGetPhoto(p.id);
-    if (!blob) return alert("No se encontró la imagen en la base local.");
+    if (!blob) return showToast("No se encontró la imagen.", "error");
 
     const url = URL.createObjectURL(blob);
     const img = new Image();
@@ -2298,15 +2314,15 @@ async function rotarFoto(index, dir){
 
       } catch (err) {
         console.error(err);
-        alert("No se pudo rotar la foto.");
+        showToast("No se pudo rotar la foto.", "error");
       } finally { URL.revokeObjectURL(url); }
     };
-    img.onerror = () => { URL.revokeObjectURL(url); alert("No se pudo cargar la imagen para rotar."); };
+    img.onerror = () => { URL.revokeObjectURL(url); showToast("No se pudo cargar la imagen para rotar.", "error"); };
     img.src = url;
 
   } catch (e) {
     console.error(e);
-    alert("Error al rotar la foto.");
+    showToast("Error al rotar la foto.", "error");
   }
 }
 
@@ -2403,7 +2419,7 @@ function irARevision(){
   const nameOk = (document.getElementById('f_nom').value || "").trim().length > 0;
   const rankOk = (document.getElementById('f_rank').value || "").trim().length > 0;
   if (!nameOk || !rankOk) {
-    alert("DEBE COMPLETAR LOS DATOS");
+    showToast("Debe completar los datos del informe.", "warning");
     return;
   }
   cambiarPaso(5);
@@ -2432,13 +2448,13 @@ async function generarPDF(){
   __isGeneratingPdf = true;
 
   if (!window.SETPDF || typeof window.SETPDF.generate !== "function") {
-    alert("El generador de PDF no está disponible.");
+    showToast("El generador de PDF no está disponible.", "error");
     __isGeneratingPdf = false;
     return;
   }
 
   if (!photos.length) {
-    alert("No hay fotos para generar el PDF.");
+    showToast("Agregue al menos una foto para generar el PDF.", "warning");
     __isGeneratingPdf = false;
     return;
   }
@@ -2516,13 +2532,14 @@ async function generarPDF(){
     if (res?.blobUrl && window.SETPDF?.showPdfModal) {
       window.SETPDF.showPdfModal(res.blobUrl);
     } else {
-      alert("PDF generado. Revisa Descargas.");
+      showToast("PDF generado. Revisa Descargas.", "success");
     }
     window.lastPdfObjectUrl = res?.blobUrl || null;
 
   } catch (err) {
     console.error(err);
-    alert("No se pudo generar el PDF.\n\nDetalle: " + (err?.message || err));
+    if (window.Sentry) Sentry.captureException(err);
+    showToast('Error al generar PDF: ' + (err?.message || 'error desconocido'), 'error', 5000);
   } finally {
     __isGeneratingPdf = false;
     if (btn) btn.disabled = false;
@@ -2619,14 +2636,14 @@ async function promptCity(){
     if(!res.ok) throw new Error("Geocoding error");
     const data = await res.json();
     const r = (data?.results || [])[0];
-    if(!r) return alert("No se encontró la ciudad. Intente con otro nombre.");
+    if(!r) return showToast('No se encontró la ciudad. Intente con otro nombre.', 'warning');
 
     const city = { name: r.name, lat: r.latitude, lon: r.longitude };
     saveCity(city);
     await refreshWeather();
   } catch(e){
     console.error(e);
-    alert("No se pudo cambiar la ciudad (sin conexión o error de servicio).");
+    showToast("No se pudo cambiar la ciudad.", "error");
   }
 }
 
