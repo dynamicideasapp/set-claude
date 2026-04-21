@@ -565,21 +565,35 @@
 
     const sigImgUrl = String(ctx.sigImageDataUrl || "");
     if (sigImgUrl && sigImgUrl.startsWith("data:image/")) {
-      // Firma digital: máx 50mm (5cm) ancho, alto proporcional
-      const SIG_MAX_W = 50;
+      // Firma digital: 110mm ancho, alto proporcional al canvas (relación 1:0.42)
+      const SIG_MAX_W = 110;
       let sigW = SIG_MAX_W;
-      let sigH = sigW * 0.4; // fallback proporcional 2.5:1
+      let sigH = sigW * 0.42; // fallback: relación del canvas (W * 0.42)
       try {
         const props = doc.getImageProperties(sigImgUrl);
         if (props?.width && props?.height && props.width > 0) {
           sigH = sigW * (props.height / props.width);
         }
       } catch (_) {}
-      if (state.y + sigH + 8 > state.bottomLimit) pageBreakFn();
+      if (state.y + sigH + 10 > state.bottomLimit) pageBreakFn();
       const xSig = (pW - sigW) / 2;
       const format = sigImgUrl.includes("image/png") ? "PNG" : "JPEG";
+      // Colocar imagen: la línea del canvas está al 60% del alto → se superpone sobre la línea PDF
       doc.addImage(sigImgUrl, format, xSig, state.y, sigW, sigH, undefined, "FAST");
-      state.y += sigH + 4;
+      // Línea de firma al 60% del alto de imagen (coincide con la guía del canvas)
+      const sigLineY = state.y + sigH * 0.60;
+      safeSetFont(doc, null, "bold");
+      const lineW = doc.getTextWidth(ctx.nameUpper);
+      const lineX = (pW - lineW) / 2;
+      doc.setDrawColor(0);
+      doc.setLineWidth(0.3);
+      doc.line(lineX, sigLineY, lineX + lineW, sigLineY);
+      // Nombre a 1 cm bajo la línea
+      state.y = sigLineY + 10;
+      doc.text(ctx.nameUpper, pW / 2, state.y, { align: "center" });
+      state.y += 5;
+      safeSetFont(doc, null, "normal");
+      doc.text(ctx.rankUpper, pW / 2, state.y, { align: "center" });
     } else {
       // Firma de texto: nombre y cargo centrados
       state.y += 4;
