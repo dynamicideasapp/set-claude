@@ -1255,20 +1255,6 @@ function togglePanel(contentId, arrowId){
 function uuid(){ return 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9); }
 function revokeAllUrls(){ photos.forEach(p => { if (p.url) URL.revokeObjectURL(p.url); }); }
 
-function initModoEscritorio(){
-  const isNative = window.Capacitor?.isNativePlatform?.() === true;
-  if (!isNative) {
-    const btn = document.getElementById('btnModoEscritorio');
-    if (btn) btn.style.display = 'block';
-  }
-}
-
-function toggleModoEscritorio(){
-  const isDesktop = document.body.classList.toggle('modo-escritorio');
-  const btn = document.getElementById('btnModoEscritorio');
-  if (btn) btn.textContent = isDesktop ? '📱 CAMBIAR A VERSIÓN MÓVIL' : '🖥️ CAMBIAR A VERSIÓN WEB';
-}
-
 function setFooter(){
   document.getElementById("footerText").innerHTML =
     `CREADA POR HERNAN DIAZ DINAMARCA<br>${VERSION_LABEL} BUILD ${BUILD_DATE}<br>FUNCIONANDO HASTA EL 20.05.2026`;
@@ -1534,7 +1520,7 @@ async function optimizeImageFileToBlob(file){
 window.onload = () => {
   setFooter();
   initTheme();
-  initModoEscritorio();
+
 
   const splash = document.getElementById('splash');         // Skin 1
   const splashWords = document.getElementById('splash-words'); // Skin 2
