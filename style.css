@@ -987,6 +987,16 @@ body.dark .ad-body{ background:rgba(255,255,255,0.06); }
   overflow:auto;
 }
 
+/* Firma pad landscape forzado via CSS cuando está en portrait */
+#firmaPadModal.firma-landscape {
+  width: 100vh;
+  height: 100vw;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+  transform: rotate(90deg) translateY(-100%);
+}
+
 #toastContainer{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;width:90%;max-width:400px;}
 .toast{padding:12px 18px;border-radius:10px;font-size:.85rem;font-weight:600;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,0.3);opacity:0;transform:translateY(20px);transition:opacity .3s,transform .3s;pointer-events:none;text-align:center;width:100%;box-sizing:border-box;}
 .toast.show{opacity:1;transform:translateY(0);}
