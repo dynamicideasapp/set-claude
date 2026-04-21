@@ -47,7 +47,7 @@ const DRAFTS_KEY = "set_drafts_v1";
 const CURRENT_DRAFT_ID_KEY = "set_current_draft_id_v1";
 const DRAFTS_MAX = 10;
 const PDF_LIBRARY_KEY = "set_pdf_library_v1";
-const PDF_LIBRARY_MAX = 10;
+const PDF_LIBRARY_MAX = window.Capacitor?.isNativePlatform?.() ? 10 : 5;
 const REPORT_MEMBRETE_KEY = "set_report_membrete_v1";
 const REPORT_MEMBRETE_MODE_KEY = "set_report_membrete_mode_v1";
 const REPORT_MEMBRETE_TEXT_KEY = "set_report_membrete_text_v1";
@@ -504,8 +504,23 @@ async function savePdfOnAndroid(res){
 function openPdfFromLibrary(id){
   const list = loadPdfLibrary();
   const item = list.find((p) => p.id === id);
-  if (!item || !item.dataUrl) return;
-  window.open(item.dataUrl, "_blank");
+  if (!item || !item.dataUrl){ alert("No se encontró el PDF."); return; }
+  try {
+    const b64 = item.dataUrl.includes(",") ? item.dataUrl.split(",")[1] : item.dataUrl;
+    const raw = atob(b64);
+    const chunks = [];
+    for (let i = 0; i < raw.length; i += 512) {
+      const slice = raw.slice(i, i + 512);
+      const bytes = new Uint8Array(slice.length);
+      for (let j = 0; j < slice.length; j++) bytes[j] = slice.charCodeAt(j);
+      chunks.push(bytes);
+    }
+    const blob = new Blob(chunks, { type: "application/pdf" });
+    const blobUrl = URL.createObjectURL(blob);
+    window.open(blobUrl, "_blank");
+  } catch (_) {
+    window.open(item.dataUrl, "_blank");
+  }
 }
 
 async function deletePdfFromLibrary(id){
@@ -1252,6 +1267,44 @@ function togglePanel(contentId, arrowId){
   if (arrow) arrow.textContent = isOpen ? "▼" : "▲";
 }
 
+// ── CONTACTO ──────────────────────────────────────────────
+function toggleContactoForm(){
+  const form = document.getElementById('contactoForm');
+  if (!form) return;
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+function actualizarContadorContacto(){
+  const msg = document.getElementById('contactoMensaje');
+  const counter = document.getElementById('contactoContador');
+  if (msg && counter) counter.textContent = msg.value.length;
+}
+
+function enviarMensajeContacto(){
+  const asunto = (document.getElementById('contactoAsunto')?.value || '').trim();
+  const mensaje = (document.getElementById('contactoMensaje')?.value || '').trim();
+  if (!asunto) { alert('Por favor ingresa un asunto.'); return; }
+  if (!mensaje) { alert('Por favor escribe tu mensaje.'); return; }
+  const mailto = `mailto:dynamic.ideas.app@gmail.com?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(mensaje)}`;
+  const a = document.createElement('a');
+  a.href = mailto;
+  a.target = '_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function abrirWhatsApp(){
+  const a = document.createElement('a');
+  a.href = 'https://wa.me/56967009521';
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+// ──────────────────────────────────────────────────────────
+
 function uuid(){ return 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9); }
 function revokeAllUrls(){ photos.forEach(p => { if (p.url) URL.revokeObjectURL(p.url); }); }
 
@@ -1464,9 +1517,15 @@ function isUnsupportedImageType(file){
 }
 
 async function optimizeImageFileToBlob(file){
-  const t = (file.type || "").toLowerCase();
-  if (t.includes("heic") || t.includes("heif")) {
-    throw new Error("Formato HEIC/HEIF no soportado. Cambia la cámara a JPEG o usa 'Compartir como JPG'.");
+  let t = (file.type || "").toLowerCase();
+  if (t.includes("heic") || t.includes("heif") ||
+      file.name?.toLowerCase().endsWith(".heic") || file.name?.toLowerCase().endsWith(".heif")) {
+    if (typeof heic2any === "undefined") {
+      throw new Error("Formato HEIC no soportado en este dispositivo.");
+    }
+    const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 });
+    file = Array.isArray(converted) ? converted[0] : converted;
+    t = "image/jpeg";
   }
 
   const { maxSide, quality } = getCompressionSettings(file);
@@ -1997,14 +2056,11 @@ function _dibujarCrop() {
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, _cropCanvasW, _cropCanvasH);
 
-  // Imagen completa
   ctx.drawImage(_cropImgEl, 0, 0, _cropCanvasW, _cropCanvasH);
 
-  // Overlay oscuro
   ctx.fillStyle = 'rgba(0,0,0,0.58)';
   ctx.fillRect(0, 0, _cropCanvasW, _cropCanvasH);
 
-  // Zona recortada (imagen nítida)
   const { x, y, w, h } = _cropRect;
   ctx.drawImage(_cropImgEl,
     x / _cropCanvasW * _cropNatW, y / _cropCanvasH * _cropNatH,
@@ -2012,12 +2068,10 @@ function _dibujarCrop() {
     x, y, w, h
   );
 
-  // Borde blanco
   ctx.strokeStyle = '#ffffff';
   ctx.lineWidth = 2;
   ctx.strokeRect(x, y, w, h);
 
-  // Líneas de tercios
   ctx.strokeStyle = 'rgba(255,255,255,0.28)';
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -2027,7 +2081,6 @@ function _dibujarCrop() {
   }
   ctx.stroke();
 
-  // Handles en las 4 esquinas
   const handles = _getCropHandles();
   for (const pt of Object.values(handles)) {
     ctx.beginPath();
@@ -2442,6 +2495,7 @@ async function generarPDF(){
     if (res?.dataUrl) {
       try { await addPdfToLibrary({ dataUrl: res.dataUrl, fileName: res.fileName, reportCode }); }
       catch (libErr) { console.warn("No se pudo guardar en biblioteca PDF:", libErr?.message || libErr); }
+      if (typeof gtag === "function") gtag('event', 'pdf_generado', { event_category: 'PDF' });
     }
 
     // Abrir blobUrl si no se pudo guardar en filesystem

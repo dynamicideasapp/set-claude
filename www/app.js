@@ -1286,11 +1286,22 @@ function enviarMensajeContacto(){
   if (!asunto) { alert('Por favor ingresa un asunto.'); return; }
   if (!mensaje) { alert('Por favor escribe tu mensaje.'); return; }
   const mailto = `mailto:dynamic.ideas.app@gmail.com?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(mensaje)}`;
-  window.open(mailto, '_blank');
+  const a = document.createElement('a');
+  a.href = mailto;
+  a.target = '_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 function abrirWhatsApp(){
-  window.open('https://wa.me/56967009521', '_blank');
+  const a = document.createElement('a');
+  a.href = 'https://wa.me/56967009521';
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 // ──────────────────────────────────────────────────────────
 
