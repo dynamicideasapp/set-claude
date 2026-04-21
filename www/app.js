@@ -256,6 +256,69 @@ async function handleSigImage(file){
     renderSigImageUI();
   }catch(e){ showToast("No se pudo cargar la imagen de firma.", "error"); }
 }
+// ── PAD DE FIRMA ───────────────────────────────────────────
+let _firmaDrawing = false;
+let _firmaCtx = null;
+
+function abrirPadFirma() {
+  const modal = document.getElementById('firmaPadModal');
+  const canvas = document.getElementById('firmaPadCanvas');
+  if (!modal || !canvas) return;
+
+  // Ajustar tamaño real del canvas
+  const W = Math.min(window.innerWidth - 40, 420);
+  const H = Math.round(W * 0.45);
+  canvas.width = W;
+  canvas.height = H;
+  canvas.style.height = H + 'px';
+
+  _firmaCtx = canvas.getContext('2d');
+  _firmaCtx.clearRect(0, 0, W, H);
+  _firmaCtx.strokeStyle = '#1e3a5f';
+  _firmaCtx.lineWidth = 2.5;
+  _firmaCtx.lineCap = 'round';
+  _firmaCtx.lineJoin = 'round';
+
+  modal.style.display = 'flex';
+
+  // Eventos touch
+  canvas.ontouchstart = (e) => { e.preventDefault(); _firmaDrawing = true; const p = _firmaPos(e.touches[0], canvas); _firmaCtx.beginPath(); _firmaCtx.moveTo(p.x, p.y); };
+  canvas.ontouchmove  = (e) => { e.preventDefault(); if (!_firmaDrawing) return; const p = _firmaPos(e.touches[0], canvas); _firmaCtx.lineTo(p.x, p.y); _firmaCtx.stroke(); };
+  canvas.ontouchend   = () => { _firmaDrawing = false; };
+
+  // Eventos mouse (laptop/web)
+  canvas.onmousedown = (e) => { _firmaDrawing = true; const p = _firmaPos(e, canvas); _firmaCtx.beginPath(); _firmaCtx.moveTo(p.x, p.y); };
+  canvas.onmousemove = (e) => { if (!_firmaDrawing) return; const p = _firmaPos(e, canvas); _firmaCtx.lineTo(p.x, p.y); _firmaCtx.stroke(); };
+  canvas.onmouseup   = () => { _firmaDrawing = false; };
+}
+
+function _firmaPos(e, canvas) {
+  const r = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / r.width;
+  const scaleY = canvas.height / r.height;
+  return { x: (e.clientX - r.left) * scaleX, y: (e.clientY - r.top) * scaleY };
+}
+
+function limpiarFirmaPad() {
+  const canvas = document.getElementById('firmaPadCanvas');
+  if (_firmaCtx) _firmaCtx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function cerrarFirmaPad() {
+  document.getElementById('firmaPadModal').style.display = 'none';
+}
+
+async function confirmarFirmaPad() {
+  const canvas = document.getElementById('firmaPadCanvas');
+  if (!canvas) return;
+  const dataUrl = canvas.toDataURL('image/png');
+  await setReportSigImage(dataUrl);
+  renderSigImageUI();
+  cerrarFirmaPad();
+  showToast('Firma guardada.', 'success');
+}
+// ──────────────────────────────────────────────────────────
+
 async function clearSigImage(){
   await setReportSigImage("");
   const input = document.getElementById("sigImageInput");
