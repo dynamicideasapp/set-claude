@@ -333,8 +333,16 @@ async function sharePdfFromLibrary(id){
   if (!item?.dataUrl){ alert("No se encontró el PDF."); return; }
 
   if (!Share || !Filesystem){
-    // Fallback: abrir en nueva pestaña
-    window.open(item.dataUrl, "_blank");
+    const _b64f = item.dataUrl.includes(",") ? item.dataUrl.split(",")[1] : item.dataUrl;
+    const _rawf = atob(_b64f), _bytesf = new Uint8Array(_rawf.length);
+    for (let i = 0; i < _rawf.length; i++) _bytesf[i] = _rawf.charCodeAt(i);
+    const _filef = new File([_bytesf], (item.name || "reporte") + ".pdf", { type: "application/pdf" });
+    if (navigator.canShare && navigator.canShare({ files: [_filef] })) {
+      try { await navigator.share({ files: [_filef], title: item.name || "Reporte fotográfico" }); }
+      catch(e){ if (e.name !== 'AbortError') window.open(item.dataUrl, "_blank"); }
+    } else {
+      window.open(item.dataUrl, "_blank");
+    }
     return;
   }
 
@@ -2450,8 +2458,7 @@ async function generarPDF(){
 
     // Abrir blobUrl si no se pudo guardar en filesystem
     if (!saved && res?.blobUrl) {
-      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-      if (isIOS && res?.dataUrl) {
+      if (res?.dataUrl) {
         try {
           const b64 = res.dataUrl.includes(",") ? res.dataUrl.split(",")[1] : res.dataUrl;
           const raw = atob(b64);
@@ -2463,8 +2470,8 @@ async function generarPDF(){
           } else {
             window.open(res.blobUrl, "_blank");
           }
-        } catch (_) {
-          window.open(res.blobUrl, "_blank");
+        } catch (e) {
+          if (e.name !== 'AbortError') window.open(res.blobUrl, "_blank");
         }
       } else {
         try { window.open(res.blobUrl, "_blank"); } catch (_) {}
