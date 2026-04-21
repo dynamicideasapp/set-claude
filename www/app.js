@@ -179,14 +179,6 @@ function renderReportMembreteUI(){
   if (l3 && l3.value !== (lines[2] || "")) l3.value = lines[2] || "";
 }
 
-function selectReportMembreteMode(value){
-  setReportMembreteMode(value);
-  if (value === "image") {
-    const input = document.getElementById("reportMembreteImageInput");
-    if (input) input.click();
-  }
-}
-
 function updateReportMembreteText(){
   const l1 = document.getElementById("reportMembreteLine1");
   const l2 = document.getElementById("reportMembreteLine2");
