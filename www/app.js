@@ -94,13 +94,31 @@ function setReportMembreteTextLines(lines){
   localStorage.setItem(REPORT_MEMBRETE_TEXT_KEY, JSON.stringify(lines || ["", "", ""]));
 }
 
-function getReportMembreteImage(){
-  return localStorage.getItem(REPORT_MEMBRETE_IMAGE_KEY) || "";
+// ── CACHE EN MEMORIA para imágenes grandes (evita saturar localStorage) ──────
+const _imgCache = {
+  [REPORT_MEMBRETE_IMAGE_KEY]: "",
+  [REPORT_SIG_IMAGE_KEY]: "",
+  [NEW_TEMPLATE_SIGNATURE_IMAGE_KEY]: "",
+  [NEW_TEMPLATE_MEMBRETE_IMAGE_KEY]: ""
+};
+async function migrateAndLoadImageCache(){
+  for (const key of Object.keys(_imgCache)) {
+    let val = await idbKvGet(key);
+    if (val === null) {
+      const old = localStorage.getItem(key);
+      if (old) { await idbKvSet(key, old); localStorage.removeItem(key); val = old; }
+    }
+    _imgCache[key] = val || "";
+  }
 }
 
-function setReportMembreteImage(dataUrl){
-  if (dataUrl) localStorage.setItem(REPORT_MEMBRETE_IMAGE_KEY, dataUrl);
-  else localStorage.removeItem(REPORT_MEMBRETE_IMAGE_KEY);
+function getReportMembreteImage(){
+  return _imgCache[REPORT_MEMBRETE_IMAGE_KEY] || "";
+}
+
+async function setReportMembreteImage(dataUrl){
+  _imgCache[REPORT_MEMBRETE_IMAGE_KEY] = dataUrl || "";
+  await idbKvSet(REPORT_MEMBRETE_IMAGE_KEY, dataUrl || "");
 }
 
 function getReportNoteColor(){
@@ -212,13 +230,13 @@ async function fileToJpegDataUrl(file, maxSide){
 
 async function handleReportMembreteImage(file){
   if (!file) {
-    setReportMembreteImage("");
+    await setReportMembreteImage("");
     renderReportMembreteUI();
     return;
   }
   try{
     const dataUrl = await fileToJpegDataUrl(file, 800);
-    setReportMembreteImage(String(dataUrl || ""));
+    await setReportMembreteImage(String(dataUrl || ""));
     renderReportMembreteUI();
   } catch (e) {
     alert("No se pudo cargar la imagen del membrete.");
@@ -232,22 +250,22 @@ function useReportMembrete(){
 
 // ── FIRMA DIGITAL (informe actual, s4) ──────────────────────────────────────
 function getReportSigImage(){
-  return localStorage.getItem(REPORT_SIG_IMAGE_KEY) || "";
+  return _imgCache[REPORT_SIG_IMAGE_KEY] || "";
 }
-function setReportSigImage(dataUrl){
-  if (dataUrl) localStorage.setItem(REPORT_SIG_IMAGE_KEY, dataUrl);
-  else localStorage.removeItem(REPORT_SIG_IMAGE_KEY);
+async function setReportSigImage(dataUrl){
+  _imgCache[REPORT_SIG_IMAGE_KEY] = dataUrl || "";
+  await idbKvSet(REPORT_SIG_IMAGE_KEY, dataUrl || "");
 }
 async function handleSigImage(file){
-  if (!file){ setReportSigImage(""); renderSigImageUI(); return; }
+  if (!file){ await setReportSigImage(""); renderSigImageUI(); return; }
   try{
     const dataUrl = await fileToJpegDataUrl(file, 800);
-    setReportSigImage(String(dataUrl || ""));
+    await setReportSigImage(String(dataUrl || ""));
     renderSigImageUI();
   }catch(e){ alert("No se pudo cargar la imagen de firma."); }
 }
-function clearSigImage(){
-  setReportSigImage("");
+async function clearSigImage(){
+  await setReportSigImage("");
   const input = document.getElementById("sigImageInput");
   if (input) input.value = "";
   renderSigImageUI();
@@ -263,22 +281,22 @@ function renderSigImageUI(){
 
 // ── FIRMA DIGITAL (plantilla, s7) ─────────────────────────────────────────
 function getTemplateSigImage(){
-  return localStorage.getItem(NEW_TEMPLATE_SIGNATURE_IMAGE_KEY) || "";
+  return _imgCache[NEW_TEMPLATE_SIGNATURE_IMAGE_KEY] || "";
 }
-function setTemplateSigImage(dataUrl){
-  if (dataUrl) localStorage.setItem(NEW_TEMPLATE_SIGNATURE_IMAGE_KEY, dataUrl);
-  else localStorage.removeItem(NEW_TEMPLATE_SIGNATURE_IMAGE_KEY);
+async function setTemplateSigImage(dataUrl){
+  _imgCache[NEW_TEMPLATE_SIGNATURE_IMAGE_KEY] = dataUrl || "";
+  await idbKvSet(NEW_TEMPLATE_SIGNATURE_IMAGE_KEY, dataUrl || "");
 }
 async function handleTemplateSigImage(file){
-  if (!file){ setTemplateSigImage(""); renderTemplateSigImageUI(); return; }
+  if (!file){ await setTemplateSigImage(""); renderTemplateSigImageUI(); return; }
   try{
     const dataUrl = await fileToJpegDataUrl(file, 800);
-    setTemplateSigImage(String(dataUrl || ""));
+    await setTemplateSigImage(String(dataUrl || ""));
     renderTemplateSigImageUI();
   }catch(e){ alert("No se pudo cargar la imagen de firma."); }
 }
-function clearTemplateSigImage(){
-  setTemplateSigImage("");
+async function clearTemplateSigImage(){
+  await setTemplateSigImage("");
   const input = document.getElementById("templateSigImageInput");
   if (input) input.value = "";
   renderTemplateSigImageUI();
@@ -378,35 +396,34 @@ function togglePdfLibraryMenu(){
   renderPdfLibrary();
 }
 
-function loadPdfLibrary(){
+let _pdfLibraryCache = null;
+async function initPdfLibraryCache(){
+  const old = localStorage.getItem(PDF_LIBRARY_KEY);
+  if (old) {
+    try {
+      const parsed = JSON.parse(old);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        await idbKvSet(PDF_LIBRARY_KEY, old);
+      }
+    } catch (_) {}
+    localStorage.removeItem(PDF_LIBRARY_KEY);
+  }
   try {
-    const raw = localStorage.getItem(PDF_LIBRARY_KEY);
+    const raw = await idbKvGet(PDF_LIBRARY_KEY);
     const list = raw ? JSON.parse(raw) : [];
-    return Array.isArray(list) ? list : [];
+    _pdfLibraryCache = Array.isArray(list) ? list : [];
   } catch (_) {
-    return [];
+    _pdfLibraryCache = [];
   }
 }
 
-function savePdfLibrary(list){
-  const data = JSON.stringify(list || []);
-  try {
-    localStorage.setItem(PDF_LIBRARY_KEY, data);
-    return;
-  } catch (_) {}
-  // Quota exceeded: intentar sin dataUrl en entradas antiguas
-  try {
-    const slim = (list || []).map((p, i) => i === 0 ? p : { ...p, dataUrl: "" });
-    localStorage.setItem(PDF_LIBRARY_KEY, JSON.stringify(slim));
-    return;
-  } catch (_) {}
-  // Último recurso: solo la entrada más reciente sin dataUrl
-  try {
-    const newest = (list || []).length ? [{ ...(list[0]), dataUrl: "" }] : [];
-    localStorage.setItem(PDF_LIBRARY_KEY, JSON.stringify(newest));
-    return;
-  } catch (_) {}
-  console.warn("Biblioteca PDF: cuota de almacenamiento excedida, se omite guardar.");
+function loadPdfLibrary(){
+  return _pdfLibraryCache || [];
+}
+
+async function savePdfLibrary(list){
+  _pdfLibraryCache = list || [];
+  await idbKvSet(PDF_LIBRARY_KEY, JSON.stringify(_pdfLibraryCache));
 }
 
 function renderPdfLibrary(){
@@ -435,7 +452,7 @@ function renderPdfLibrary(){
   if (listEl) listEl.innerHTML = html;
 }
 
-function addPdfToLibrary(entry){
+async function addPdfToLibrary(entry){
   if (!entry || !entry.dataUrl) return;
   const list = loadPdfLibrary();
   const displayName = entry.reportCode ? String(entry.reportCode) : String(entry.fileName || "PDF");
@@ -447,7 +464,7 @@ function addPdfToLibrary(entry){
   };
   list.unshift(item);
   const trimmed = list.slice(0, PDF_LIBRARY_MAX);
-  savePdfLibrary(trimmed);
+  await savePdfLibrary(trimmed);
   renderPdfLibrary();
 }
 
@@ -496,10 +513,10 @@ function openPdfFromLibrary(id){
   }
 }
 
-function deletePdfFromLibrary(id){
+async function deletePdfFromLibrary(id){
   const list = loadPdfLibrary();
   const next = list.filter((p) => p.id !== id);
-  savePdfLibrary(next);
+  await savePdfLibrary(next);
   renderPdfLibrary();
 }
 
@@ -1078,12 +1095,12 @@ function setMembreteTextLines(lines){
 }
 
 function getMembreteImage(){
-  return localStorage.getItem(NEW_TEMPLATE_MEMBRETE_IMAGE_KEY) || "";
+  return _imgCache[NEW_TEMPLATE_MEMBRETE_IMAGE_KEY] || "";
 }
 
-function setMembreteImage(dataUrl){
-  if (dataUrl) localStorage.setItem(NEW_TEMPLATE_MEMBRETE_IMAGE_KEY, dataUrl);
-  else localStorage.removeItem(NEW_TEMPLATE_MEMBRETE_IMAGE_KEY);
+async function setMembreteImage(dataUrl){
+  _imgCache[NEW_TEMPLATE_MEMBRETE_IMAGE_KEY] = dataUrl || "";
+  await idbKvSet(NEW_TEMPLATE_MEMBRETE_IMAGE_KEY, dataUrl || "");
 }
 
 function toggleMembreteMenu(){
@@ -1111,13 +1128,13 @@ function updateMembreteText(){
 
 async function handleMembreteImage(file){
   if (!file) {
-    setMembreteImage("");
+    await setMembreteImage("");
     renderNewTemplateUI();
     return;
   }
   try{
     const dataUrl = await fileToJpegDataUrl(file, 800);
-    setMembreteImage(String(dataUrl || ""));
+    await setMembreteImage(String(dataUrl || ""));
     renderNewTemplateUI();
     closeSubmenu("membreteMenu");
   } catch (e) {
@@ -1201,8 +1218,9 @@ const STORAGE_KEY = 'set_foto_v19';
 const FINALIZED_FLAG = 'set_foto_v19_finalized';
 
 const DB_NAME = 'set_foto_db_v1';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_PHOTOS = 'photos';
+const STORE_KV = 'kvstore';
 
 /***********************
  * WEATHER / UTM
@@ -1290,6 +1308,9 @@ function openDB(){
       if (!db.objectStoreNames.contains(STORE_PHOTOS)) {
         db.createObjectStore(STORE_PHOTOS, { keyPath: 'id' });
       }
+      if (!db.objectStoreNames.contains(STORE_KV)) {
+        db.createObjectStore(STORE_KV, { keyPath: 'key' });
+      }
     };
 
     req.onblocked = () => {
@@ -1343,6 +1364,28 @@ async function idbClearAll(){
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_PHOTOS, 'readwrite');
     tx.objectStore(STORE_PHOTOS).clear();
+    tx.oncomplete = () => { db.close(); resolve(true); };
+    tx.onerror = () => { db.close(); reject(tx.error); };
+  });
+}
+async function idbKvGet(key){
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_KV, 'readonly');
+    const req = tx.objectStore(STORE_KV).get(key);
+    req.onsuccess = () => { db.close(); resolve(req.result ? req.result.value : null); };
+    req.onerror = () => { db.close(); reject(req.error); };
+  });
+}
+async function idbKvSet(key, value){
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_KV, 'readwrite');
+    if (value !== null && value !== undefined && value !== "") {
+      tx.objectStore(STORE_KV).put({ key, value });
+    } else {
+      tx.objectStore(STORE_KV).delete(key);
+    }
     tx.oncomplete = () => { db.close(); resolve(true); };
     tx.onerror = () => { db.close(); reject(tx.error); };
   });
@@ -1544,6 +1587,9 @@ window.onload = () => {
 };
 
 async function arrancarSeguridadYMenu(){
+  await migrateAndLoadImageCache();
+  await initPdfLibraryCache();
+
   const finalized = localStorage.getItem(FINALIZED_FLAG);
 
   if (finalized === '1') {
@@ -1773,7 +1819,7 @@ async function borrarTodo(){
     photoDataUrlCache.clear();
     await idbClearAll();
     clearPreview();
-    setReportSigImage("");
+    await setReportSigImage("");
 
     location.reload();
   }
@@ -2407,7 +2453,7 @@ async function generarPDF(){
 
     // Guardar en librería interna (puede fallar por cuota sin interrumpir el flujo)
     if (res?.dataUrl) {
-      try { addPdfToLibrary({ dataUrl: res.dataUrl, fileName: res.fileName, reportCode }); }
+      try { await addPdfToLibrary({ dataUrl: res.dataUrl, fileName: res.fileName, reportCode }); }
       catch (libErr) { console.warn("No se pudo guardar en biblioteca PDF:", libErr?.message || libErr); }
       if (typeof gtag === "function") gtag('event', 'pdf_generado', { event_category: 'PDF' });
     }

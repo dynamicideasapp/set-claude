@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">SET FOTOGRAFICO – Dynamic Ideas</string>
-    <string name="title_activity_main">SET FOTOGRAFICO – Dynamic Ideas</string>
+    <string name="app_name">SET CLAUDE BETA 1.0 – Dynamic Ideas</string>
+    <string name="title_activity_main">SET CLAUDE BETA 1.0 – Dynamic Ideas</string>
     <string name="package_name">com.dynamicideas.setfotografico</string>
     <string name="custom_url_scheme">com.dynamicideas.setfotografico</string>
 </resources>

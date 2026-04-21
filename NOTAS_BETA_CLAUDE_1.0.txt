@@ -3,9 +3,47 @@ NOTAS BETA CLAUDE 1.0 – SET FOTOGRÁFICO
 Creada por Hernán Díaz · Dynamic Ideas
 =========================================================
 
-VERSIÓN ACTUAL: APP BETA CLAUDE 1.0 – BUILD 2026-04-19
-APK: SET_FOTOGRAFICO_v4.3_debug.apk
+VERSIÓN ACTUAL: APP BETA CLAUDE 1.0 – BUILD 2026-04-20
+APK: SET_FOTOGRAFICO_v4.6_debug.apk
 ID App: com.dynamicideas.setfotografico
+
+=========================================================
+SESIÓN CLAUDE – 2026-04-20 (SEXTA ACTUALIZACIÓN)
+=========================================================
+
+MEJORAS IMPLEMENTADAS:
+
+1. MIGRACIÓN DE ALMACENAMIENTO A INDEXEDDB (SOLUCIÓN LÍMITE 5MB)
+   - Problema: imágenes de membrete, firmas y PDFs saturaban el localStorage (5MB)
+   - Las fotos ya usaban IndexedDB; ahora también las demás imágenes y PDFs
+   - Se agregó store "kvstore" a la base IndexedDB existente (DB_VERSION 1 → 2)
+   - Nuevas funciones: idbKvGet(), idbKvSet() como helpers genéricos clave-valor
+   - Cache en memoria (_imgCache) para mantener getters síncronos sin cambiar la UI
+   - Migración automática al arrancar: lee datos viejos de localStorage,
+     los mueve a IndexedDB y los elimina de localStorage (sin perder datos)
+   - Claves migradas a IndexedDB:
+     · set_report_membrete_image_v1 (imagen membrete del informe)
+     · set_report_sig_image_v1 (firma digital del informe)
+     · set_new_template_sig_image_v1 (firma digital de plantilla)
+     · set_new_template_membrete_image_v1 (imagen membrete de plantilla)
+     · set_pdf_library_v1 (biblioteca de PDFs generados)
+   - Eliminado el código de fallback por cuota de localStorage en savePdfLibrary
+   - Configuraciones pequeñas (tema, fuente, colores, etc.) siguen en localStorage
+   - Archivos: www/app.js, app.js
+
+2. ÍCONO FLECHA ATRÁS EN BOTONES "VOLVER ATRÁS"
+   - Todos los botones "VOLVER ATRÁS" ahora muestran un chevron SVG minimalista
+   - El ícono usa currentColor (hereda el blanco del texto automáticamente)
+   - CSS: .btn-sec ahora tiene display:flex + align-items:center + gap:8px
+   - Archivos: www/index.html, index.html, www/style.css, style.css
+
+3. MEJORA TRACKING GOOGLE ANALYTICS EN MÓVIL Y APK
+   - APK (Capacitor): cuando hostname === 'localhost', fuerza page_location
+     a https://app.setfotografico.cl/ para que GA4 unifique las visitas
+   - Móvil (navegador): agregado transport_type:'beacon' para enviar el hit
+     incluso si el usuario cierra la página antes de que cargue el script async
+   - Eliminado noscript GTM huérfano (sin script principal) del index.html raíz
+   - Archivos: www/index.html, index.html
 
 =========================================================
 SESIÓN CLAUDE – 2026-04-19 (QUINTA ACTUALIZACIÓN)
